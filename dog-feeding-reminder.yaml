@@ -1,0 +1,102 @@
+blueprint:
+  name: Dog Feeding Reminder
+  description: Notify when the dog needs to be fed twice a day.
+  domain: automation
+  input:
+    nfc_tag:
+      name: NFC Tag
+      selector:
+        entity:
+          domain: sensor
+          device_class: timestamp
+    morning_time:
+      name: Morning Feed Deadline
+      default: '11:00:00'
+      selector:
+        time:
+    evening_time:
+      name: Evening Feed Deadline
+      default: '20:00:00'
+      selector:
+        time:
+    notify_device:
+      name: Notification Device
+      selector:
+        device:
+          integration: mobile_app
+
+variables:
+  morning_notified: false
+  evening_notified: false
+
+trigger:
+  - platform: time
+    at: !input morning_time
+  - platform: time
+    at: !input evening_time
+
+condition:
+  - condition: template
+    value_template: >
+      {% set current_time = now().time() %}
+      {% set last_fed = states('sensor.last_fed') %}
+      {% set last_fed_time = as_timestamp(last_fed) %}
+      {% set morning_feed_time = as_timestamp(now().replace(hour=11, minute=0, second=0)) %}
+      {% set evening_feed_time = as_timestamp(now().replace(hour=20, minute=0, second=0)) %}
+      
+      {{ (trigger.platform == 'time' and current_time == strptime(!input morning_time, '%H:%M:%S').time() and last_fed_time < morning_feed_time) or
+         (trigger.platform == 'time' and current_time == strptime(!input evening_time, '%H:%M:%S').time() and last_fed_time < evening_feed_time) }}
+
+action:
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.platform == 'time' and now().time() == strptime(!input morning_time, '%H:%M:%S').time() }}"
+        sequence:
+          - service: notify.mobile_app_{{ !input notify_device }}
+            data:
+              title: Dog Feeding Reminder
+              message: "The dog needs to be fed in the morning!"
+              data:
+                actions:
+                  - action: FEED_DOG
+                    title: Mark as Fed
+
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.platform == 'time' and now().time() == strptime(!input evening_time, '%H:%M:%S').time() }}"
+        sequence:
+          - service: notify.mobile_app_{{ !input notify_device }}
+            data:
+              title: Dog Feeding Reminder
+              message: "The dog needs to be fed in the evening!"
+              data:
+                actions:
+                  - action: FEED_DOG
+                    title: Mark as Fed
+
+  - alias: "Handle NFC Tag Scan"
+    trigger:
+      - platform: state
+        entity_id: !input nfc_tag
+
+    action:
+      - service: input_datetime.set_datetime
+        target:
+          entity_id: sensor.last_fed
+        data:
+          timestamp: "{{ now().timestamp() }}"
+
+  - alias: "Handle Notification Action"
+    trigger:
+      - platform: event
+        event_type: mobile_app_notification_action
+        event_data:
+          action: FEED_DOG
+
+    action:
+      - service: input_datetime.set_datetime
+        target:
+          entity_id: sensor.last_fed
+        data:
+          timestamp: "{{ now().timestamp() }}"
