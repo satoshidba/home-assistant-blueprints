@@ -6,9 +6,7 @@ blueprint:
     nfc_tag:
       name: NFC Tag
       selector:
-        entity:
-          domain: sensor
-          device_class: timestamp
+        tag: {}
     morning_time:
       name: Morning Feed Deadline
       default: '11:00:00'
