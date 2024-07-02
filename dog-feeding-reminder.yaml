@@ -3,10 +3,6 @@ blueprint:
   description: Notify when the dog needs to be fed twice a day.
   domain: automation
   input:
-    nfc_tag:
-      name: NFC Tag
-      selector:
-        tag: {}
     morning_time:
       name: Morning Feed Deadline
       default: '11:00:00'
@@ -24,26 +20,27 @@ blueprint:
           integration: mobile_app
 
 variables:
-  morning_notified: false
-  evening_notified: false
+  last_fed: "{{ states('input_datetime.last_fed') }}"
 
 trigger:
   - platform: time
     at: !input morning_time
   - platform: time
     at: !input evening_time
+  - platform: event
+    event_type: tag_scanned
 
 condition:
   - condition: template
     value_template: >
       {% set current_time = now().time() %}
-      {% set last_fed = states('sensor.last_fed') %}
       {% set last_fed_time = as_timestamp(last_fed) %}
       {% set morning_feed_time = as_timestamp(now().replace(hour=11, minute=0, second=0)) %}
       {% set evening_feed_time = as_timestamp(now().replace(hour=20, minute=0, second=0)) %}
       
       {{ (trigger.platform == 'time' and current_time == strptime(!input morning_time, '%H:%M:%S').time() and last_fed_time < morning_feed_time) or
-         (trigger.platform == 'time' and current_time == strptime(!input evening_time, '%H:%M:%S').time() and last_fed_time < evening_feed_time) }}
+         (trigger.platform == 'time' and current_time == strptime(!input evening_time, '%H:%M:%S').time() and last_fed_time < evening_feed_time) or
+         (trigger.platform == 'event' and trigger.event.event_type == 'tag_scanned' and last_fed_time < now().timestamp() - 12*60*60) }}
 
 action:
   - choose:
@@ -74,14 +71,13 @@ action:
                     title: Mark as Fed
 
   - alias: "Handle NFC Tag Scan"
-    trigger:
-      - platform: state
-        entity_id: !input nfc_tag
-
+    conditions:
+      - condition: template
+        value_template: "{{ trigger.platform == 'event' and trigger.event.event_type == 'tag_scanned' }}"
     action:
       - service: input_datetime.set_datetime
         target:
-          entity_id: sensor.last_fed
+          entity_id: input_datetime.last_fed
         data:
           timestamp: "{{ now().timestamp() }}"
 
@@ -95,6 +91,7 @@ action:
     action:
       - service: input_datetime.set_datetime
         target:
-          entity_id: sensor.last_fed
+          entity_id: input_datetime.last_fed
         data:
           timestamp: "{{ now().timestamp() }}"
+
