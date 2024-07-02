@@ -95,9 +95,6 @@ action:
             name: !input notification_title
             message: !input logbook_message_remind
             entity_id: !input input_boolean
-        - choose:
-            - conditions: "{{ true }}"
-              sequence: !input optional_action
         - device_id: !input notify_device
           domain: mobile_app
           type: notify
