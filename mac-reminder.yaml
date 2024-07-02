@@ -1,6 +1,5 @@
 blueprint:
   name: Mac feeding reminder
-  description: 
   domain: automation
   input:
     reminder_time:
@@ -11,7 +10,6 @@ blueprint:
 
     notify_device:
       name: Notification
-      description:
       selector:
         device:
           integration: mobile_app
@@ -19,7 +17,6 @@ blueprint:
 
     input_boolean:
       name: Dedicated input_boolean
-      description: 
       selector:
         entity:
           domain: input_boolean
@@ -27,32 +24,26 @@ blueprint:
 
     notification_title:
       name: Notification title (Optional)
-      description: ""
       default: "Mac feeding reminder!"
 
     notification_message:
       name: Notification message (Optional)
-      description: ""
       default: "It's time to feed Mac"
 
     notification_action_taken:
       name: "Notification action: Fed (Optional)"
-      description: ""
       default: "fed"
 
     notification_action_later:
       name: "Notification action: Ask later (Optional)"
-      description: ""
       default: "Ask later"
 
     notification_action_skip:
       name: "Notification action: Skip (Optional)"
-      description: ""
       default: "Skip"
 
     ask_later_wait_time:
       name: Wait time before next reminder
-      description: Minutes before notify again after a Ask later action.
       default: 30
       selector:
         number:
@@ -64,27 +55,22 @@ blueprint:
 
     logbook_message_remind:
       name: Logbook message for remind (Optional)
-      description: "Default: Reminder sent"
       default: "Reminder sent"
 
     logbook_message_taken:
       name: Logbook message for action Taken (Optional)
-      description: ""
       default: "Mac fed"
 
     logbook_message_later:
       name: Logbook message for action Ask later (Optional)
-      description: ""
       default: "Postpone reminder"
 
     logbook_message_skip:
       name: Logbook message for action Skip (Optional)
-      description: ""
       default: "Reminder skipped"
 
     logbook_message_no_answer:
       name: Logbook message for no action after timeout (Optional)
-      description: ""
       default: "No answer time out"
 
 trigger:
