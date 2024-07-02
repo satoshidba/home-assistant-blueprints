@@ -35,20 +35,19 @@ condition:
     value_template: >
       {% set current_time = now().time() %}
       {% set last_fed_time = as_timestamp(last_fed) %}
-      {% set morning_feed_time = as_timestamp(now().replace(hour=11, minute=0, second=0)) %}
-      {% set evening_feed_time = as_timestamp(now().replace(hour=20, minute=0, second=0)) %}
-      
-      {{ (trigger.platform == 'time' and current_time == strptime(!input morning_time, '%H:%M:%S').time() and last_fed_time < morning_feed_time) or
-         (trigger.platform == 'time' and current_time == strptime(!input evening_time, '%H:%M:%S').time() and last_fed_time < evening_feed_time) or
-         (trigger.platform == 'event' and trigger.event.event_type == 'tag_scanned' and last_fed_time < now().timestamp() - 12*60*60) }}
+      {% set morning_feed_time = strptime(morning_time, '%H:%M:%S').time() %}
+      {% set evening_feed_time = strptime(evening_time, '%H:%M:%S').time() %}
+      {{ (trigger.platform == 'time' and current_time == morning_feed_time and last_fed_time < as_timestamp(now().replace(hour=11, minute=0, second=0))) or
+         (trigger.platform == 'time' and current_time == evening_feed_time and last_fed_time < as_timestamp(now().replace(hour=20, minute=0, second=0))) or
+         (trigger.platform == 'event' and trigger.event.event_type == 'tag_scanned') }}
 
 action:
   - choose:
       - conditions:
           - condition: template
-            value_template: "{{ trigger.platform == 'time' and now().time() == strptime(!input morning_time, '%H:%M:%S').time() }}"
+            value_template: "{{ trigger.platform == 'time' and now().time() == strptime(morning_time, '%H:%M:%S').time() }}"
         sequence:
-          - service: notify.mobile_app_{{ !input notify_device }}
+          - service: notify.mobile_app_{{ notify_device }}
             data:
               title: Dog Feeding Reminder
               message: "The dog needs to be fed in the morning!"
@@ -59,9 +58,9 @@ action:
 
       - conditions:
           - condition: template
-            value_template: "{{ trigger.platform == 'time' and now().time() == strptime(!input evening_time, '%H:%M:%S').time() }}"
+            value_template: "{{ trigger.platform == 'time' and now().time() == strptime(evening_time, '%H:%M:%S').time() }}"
         sequence:
-          - service: notify.mobile_app_{{ !input notify_device }}
+          - service: notify.mobile_app_{{ notify_device }}
             data:
               title: Dog Feeding Reminder
               message: "The dog needs to be fed in the evening!"
@@ -71,9 +70,9 @@ action:
                     title: Mark as Fed
 
   - alias: "Handle NFC Tag Scan"
-    conditions:
-      - condition: template
-        value_template: "{{ trigger.platform == 'event' and trigger.event.event_type == 'tag_scanned' }}"
+    condition:
+      condition: template
+      value_template: "{{ trigger.platform == 'event' and trigger.event.event_type == 'tag_scanned' }}"
     action:
       - service: input_datetime.set_datetime
         target:
@@ -94,4 +93,3 @@ action:
           entity_id: input_datetime.last_fed
         data:
           timestamp: "{{ now().timestamp() }}"
-
