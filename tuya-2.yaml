@@ -4,7 +4,7 @@ blueprint:
   domain: automation
   input:
     switch:
-      name: Tuya Zigbee 3 button remote
+      name: Tuya Zigbee 2 button remote
       description: Tuya Zigbee 2 button remote to use
       selector:
         entity:
