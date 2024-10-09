@@ -11,20 +11,20 @@ blueprint:
           domain: sensor
           integration: mqtt
     button_1_short_press:
-      name: Single Press - Button 1
-      description: Action to run on button 1 single press
+      name: Single Press - Button 
+      description: Action to run on button single press
       default: []
       selector:
         action: null
     button_1_hold:
-      name: Hold - Button 1
-      description: Action to run on button 1 long press
+      name: Hold - Button 
+      description: Action to run on button long press
       default: []
       selector:
         action: null
     button_1_double_press:
-      name: Double Press - Button 1
-      description: Action to run on button 1 double press
+      name: Double Press - Button
+      description: Action to run on button double press
       default: []
       selector:
         action: null
@@ -43,11 +43,11 @@ action:
       command: "{{ trigger.to_state.state }}"
   - choose:
       - conditions:
-          - "{{ command == '1_single' }}"
-        sequence: !input button_1_short_press
+          - "{{ command == 'single' }}"
+        sequence: !input button_short_press
       - conditions:
-          - "{{ command == '1_double' }}"
-        sequence: !input button_1_double_press
+          - "{{ command == 'double' }}"
+        sequence: !input button_double_press
       - conditions:
-          - "{{ command == '1_hold' }}"
-        sequence: !input button_1_hold
+          - "{{ command == 'hold' }}"
+        sequence: !input button_hold
